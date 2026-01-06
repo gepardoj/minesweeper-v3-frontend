@@ -1,6 +1,6 @@
 import { CELL_WIDTH, CELL_HEIGHT } from "./constants";
 
-export const pathname = window.location.pathname;
+export const pathname = `.`;//window.location.pathname;
 
 export const images = {
   cell: new Image(CELL_WIDTH, CELL_HEIGHT),
