@@ -7,7 +7,7 @@ import {
   ID,
 } from "./constants";
 import { GameModel } from "./model/GameModel";
-import { sounds } from "./resources";
+import { sounds, spritesheets } from "./resources";
 import { SoundSystem } from "./sound-system";
 import { MenuPopup } from "./menu-popup/menu-popup";
 import { getById } from "./helpers";
@@ -31,8 +31,8 @@ export class GameController {
   canvas: Canvas;
   clickStartedAt: number = 0;
   isPointerUp: boolean = false;
-  selectedCell?: { x: number; y: number };
-  pressedCell?: { x: number, y: number };
+  selectedCell?: { x: number; y: number; };
+  pressedCell?: { x: number, y: number; };
   model: GameModel;
   soundSystem: SoundSystem;
   menu: MenuPopup;
@@ -72,7 +72,7 @@ export class GameController {
     writeMinesLeft(this.model.GetFlagsNumber(), this.model.mines);
     this.menu.PreventMenuOpen();
     this.menu.ToggleShow(false);
-  }
+  };
 
   private OnInfo = () => {
     this.info.Show(true, [
@@ -80,12 +80,12 @@ export class GameController {
       "2. Longer touch is to flag a cell",
       "3. Holding over an open cell, it highlights around cells"
     ]);
-  }
+  };
 
   private OnOpen = (x: number, y: number) => {
     this.model.OpenAt(x, y);
     this.model.OpenAround(x, y);
-  }
+  };
 
   private OnFlag = (x: number, y: number) => {
     const cell = this.model.gameField.GetCell(x, y);
@@ -94,7 +94,7 @@ export class GameController {
     navigator.vibrate(5);
     const flags = this.model.GetFlagsNumber();
     writeMinesLeft(flags, this.model.mines);
-  }
+  };
 
   private OnSave = () => {
     // on save
@@ -102,8 +102,8 @@ export class GameController {
       if (document.hidden) {
         GameState.Save(this.model);
       }
-    }
-  }
+    };
+  };
 
   private InitOptionsBtn() {
     getById(ID.optionsBtn).onclick = () => {
@@ -123,7 +123,7 @@ export class GameController {
       offsetX = event.targetTouches[0].clientX - bcr.x;
       offsetY = event.targetTouches[0].clientY - bcr.y;
     }
-    else throw new Error("Couldn't determine the type of the event")
+    else throw new Error("Couldn't determine the type of the event");
     const x = this.canvas.GetCellNumberByOffset(offsetX, CELL_WIDTH);
     const y = this.canvas.GetCellNumberByOffset(offsetY, CELL_HEIGHT);
     return { x, y };
@@ -159,19 +159,19 @@ export class GameController {
       }
       this.model.SetHighlightAround(x, y, true);
       this.pressedCell = { x, y };
-    }
+    };
     this.canvas.el.ontouchend = () => {
       if (this.pressedCell) {
         this.model.SetHighlightAround(this.pressedCell.x, this.pressedCell.y, false);
       }
       this.pressedCell = undefined;
-    }
+    };
     this.canvas.el.onpointerup = () => {
       this.isPointerUp = true;
-      if (!this.pressedCell) return
+      if (!this.pressedCell) return;
       this.model.SetHighlightAround(this.pressedCell.x, this.pressedCell.y, false);
       this.pressedCell = undefined;
-    }
+    };
   }
 
   private DetachHandlers() {
@@ -204,10 +204,12 @@ export class GameController {
     this.soundSystem.Play(sounds.death);
     const posX = x / (this.model.gameField.cellsX - 1);
     const posY = y / (this.model.gameField.cellsY - 1);
+    this.canvas.StartSpritesheetAnimation(spritesheets.bomb, x, y);
+    // Starting wave explosion effect
     setTimeout(() => {
       this.gl.SetTexture(this.canvas.ctx.canvas.toDataURL());
       this.gl.Play([posX, posY], PLAY_EFFECT_DELAY);
-    }, 50);
+    }, 1500);
     // this.menu.RequestMenuOpen(PLAY_EFFECT_DELAY);
   }
 
@@ -230,13 +232,13 @@ export class GameController {
       return;
     }
     setTimeout(() => this.WaitingClick(x, y), 5);
-  }
+  };
 
   private GameLoop = () => {
     this.ManageEventQueue();
     this.Render();
     this.winEffect.Draw();
-    requestAnimationFrame(this.GameLoop);
+    setTimeout(() => requestAnimationFrame(this.GameLoop), 30);
   };
 
   private Render() {

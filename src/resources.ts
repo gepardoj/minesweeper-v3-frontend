@@ -13,6 +13,13 @@ images.selectedCell.src = `${pathname}/img/selected-cell.svg`;
 images.flag.src = `${pathname}/img/flag.svg`;
 images.mine.src = `${pathname}/img/mine.svg`;
 
+export type Spritesheet = { img: HTMLImageElement, frames: number; };
+
+export const spritesheets: Record<string, Spritesheet> = {
+  bomb: { img: new Image(960, CELL_HEIGHT), frames: 30 }
+};
+spritesheets.bomb.img.src = `${pathname}/img/bomb.png`;
+
 type ImagesObject = typeof images;
 type ImageKeys = keyof ImagesObject;
 

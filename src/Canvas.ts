@@ -12,12 +12,15 @@ import {
 import { GameController } from "./controller";
 import { GLCanvas } from "./gl/GLCanvas";
 import { GameModel } from "./model/GameModel";
-import { images } from "./resources";
+import { images, Spritesheet, spritesheets } from "./resources";
+
+type SpritesheetAnimation = { spritesheet: Spritesheet; x: number; y: number; currentFrame: number; };
 
 export class Canvas {
   el: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   glCanvas: GLCanvas;
+  private _spritesheetAnimations: SpritesheetAnimation[] = [];
 
   constructor(gl: GLCanvas) {
     const canvas = document.getElementById("game");
@@ -40,6 +43,29 @@ export class Canvas {
     this.ctx.font = NUMBER_FONT;
   }
 
+  StartSpritesheetAnimation(spritesheet: Spritesheet, x: number, y: number) {
+    this._spritesheetAnimations.push({ spritesheet, x, y, currentFrame: 0 });
+  }
+
+  TickSpritesheetAnimations() {
+    let reducedAnimations = this._spritesheetAnimations;
+    for (let i = 0; i < this._spritesheetAnimations.length; i++) {
+      const { spritesheet, currentFrame, x, y } = this._spritesheetAnimations[i];
+      this.ctx.clearRect(x * CELL_WIDTH, y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
+      this.ctx.drawImage(
+        spritesheet.img, currentFrame * CELL_WIDTH, 0, CELL_WIDTH, CELL_HEIGHT,
+        x * CELL_WIDTH, y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT
+      );
+      this._spritesheetAnimations[i].currentFrame++;
+      // end of animation
+      if (this._spritesheetAnimations[i].currentFrame === spritesheet.frames) {
+        reducedAnimations = reducedAnimations.filter((_, animI) => animI !== i);
+        this.ctx.clearRect(x * CELL_WIDTH, y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
+      }
+    }
+    this._spritesheetAnimations = reducedAnimations;
+  }
+
   /**
    * Called each frame, in game loop
    */
@@ -56,8 +82,8 @@ export class Canvas {
             CELL_WIDTH,
             CELL_HEIGHT
           );
-          if (cell.mined) {
-            this.DrawImageAt(images.mine, x, y, CELL_WIDTH, CELL_HEIGHT);
+          if (cell.mined) { // bomb here
+            //this.DrawImageAt(images.mine, x, y, CELL_WIDTH, CELL_HEIGHT);
           } else if (cell.nearbyMines) {
             this.ctx.fillStyle = COLOR_NUMBERS[cell.nearbyMines - 1];
             this.ctx.fillText(
@@ -83,6 +109,8 @@ export class Canvas {
         }
       }
     }
+
+    this.TickSpritesheetAnimations();
   }
 
   RenderSelectedCell(controller: GameController) {
